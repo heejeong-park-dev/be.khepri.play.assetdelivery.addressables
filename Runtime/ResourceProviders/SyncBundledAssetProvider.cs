@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Linq;
 using Khepri.AssetDelivery.AssetBundles;
 using UnityEngine;
+using Khepri.AssetDelivery.ResourceHandlers;
 using UnityEngine.ResourceManagement.ResourceProviders;
 
 namespace Khepri.AssetDelivery.ResourceProviders
