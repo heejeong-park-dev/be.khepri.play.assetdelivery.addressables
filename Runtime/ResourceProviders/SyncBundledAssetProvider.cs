@@ -61,7 +61,7 @@ namespace Khepri.AssetDelivery.ResourceProviders
 			    new JarAsyncAssetBundleResourceHandler(),
 #endif
 				new WebRequestAsyncAssetBundleResourceHandler(),
-			};   
+			}).Start(provideHandle);
 		}
 	}
 }
