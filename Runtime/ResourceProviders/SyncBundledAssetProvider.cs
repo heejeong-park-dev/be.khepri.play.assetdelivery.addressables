@@ -24,7 +24,7 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					.Select(AssetBundleCache.TryLoadBundle)
 					.FirstOrDefault();
 			}
-			
+
 			public void Start(ProvideHandle provideHandle)
 			{
 				Type t = provideHandle.Type;
@@ -40,29 +40,39 @@ namespace Khepri.AssetDelivery.ResourceProviders
 				}
 
 				object result = null;
+				AssetBundleRequest req;
 				if (t.IsArray)
-					result = bundle.LoadAssetWithSubAssets(provideHandle.Location.InternalId, t.GetElementType());
+				{	
+					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
+					req.completed += (op) =>
+					{
+						provideHandle.Complete(req.allAssets, result != null, null);
+					};
+				}
 				else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
-					result = bundle.LoadAssetWithSubAssets(provideHandle.Location.InternalId, t.GetElementType()).ToList();
+				{
+					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
+					req.completed += (op) =>
+					{
+						provideHandle.Complete(req.allAssets.ToList(), result != null, null);
+					};
+				}
 				else
-					result = bundle.LoadAsset(provideHandle.Location.InternalId, t);
+				{
+					req = bundle.LoadAssetAsync(provideHandle.Location.InternalId, t);
+					req.completed += (op) =>
+					{
+						provideHandle.Complete(req.asset, result != null, null);
+					};
+				}
 				
-				provideHandle.Complete(result, result != null, null);
 			}
 		}
 	
 		public override void Provide(ProvideHandle provideHandle)
 		{
 			Debug.LogFormat("[{0}.{1}] path={2}", nameof(SyncBundledAssetProvider), nameof(Provide), provideHandle.Location.InternalId);
-			new ModularAssetBundleResource(false, new IAssetBundleResourceHandler[]
-			{
-				new LocalAsyncAssetBundleResourceHandler(),
-#if UNITY_ANDROID
-			    new AssetPackAsyncAssetBundleResourceHandler(),
-			    new JarAsyncAssetBundleResourceHandler(),
-#endif
-				new WebRequestAsyncAssetBundleResourceHandler(),
-			}).Start(provideHandle);
+			new InternalOp().Start(provideHandle);
 		}
 	}
 }
