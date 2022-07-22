@@ -25,11 +25,13 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					.FirstOrDefault();
 			}
 
+			AssetBundleRequest req;
 			public void Start(ProvideHandle provideHandle)
 			{
 				Type t = provideHandle.Type;
 				List<object> deps = new List<object>();
 				provideHandle.GetDependencies(deps);
+                provideHandle.SetWaitForCompletionCallback(WaitForCompletionHandler);
 				Debug.LogFormat("[{0}.{1}] path={2} deps={3}", nameof(SyncBundledAssetProvider), nameof(Start), provideHandle.Location.InternalId, deps.Count);
 				AssetBundle bundle = LoadBundleFromDependecies(deps);
 				Debug.LogFormat("[{0}.{1}] path={2} deps={3} hasBundle={4}", nameof(SyncBundledAssetProvider), nameof(Start), provideHandle.Location.InternalId, deps.Count, bundle != null);
@@ -40,7 +42,6 @@ namespace Khepri.AssetDelivery.ResourceProviders
 				}
 
 				object result = null;
-				AssetBundleRequest req;
 				if (t.IsArray)
 				{	
 					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
@@ -65,8 +66,16 @@ namespace Khepri.AssetDelivery.ResourceProviders
 						provideHandle.Complete(req.asset, result != null, null);
 					};
 				}
-				
 			}
+
+			private bool WaitForCompletionHandler()
+            {
+                if (req == null)
+                    return false;
+                if (req.isDone)
+                    return true;
+                return req.asset != null;
+            }
 		}
 	
 		public override void Provide(ProvideHandle provideHandle)
