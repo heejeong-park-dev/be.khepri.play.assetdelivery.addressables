@@ -53,7 +53,15 @@ namespace Khepri.AssetDelivery.ResourceProviders
 		public override void Provide(ProvideHandle provideHandle)
 		{
 			Debug.LogFormat("[{0}.{1}] path={2}", nameof(SyncBundledAssetProvider), nameof(Provide), provideHandle.Location.InternalId);
-			new InternalOp().Start(provideHandle);   
+			new ModularAssetBundleResource(false, new IAssetBundleResourceHandler[]
+			{
+				new LocalAsyncAssetBundleResourceHandler(),
+#if UNITY_ANDROID
+			    new AssetPackAsyncAssetBundleResourceHandler(),
+			    new JarAsyncAssetBundleResourceHandler(),
+#endif
+				new WebRequestAsyncAssetBundleResourceHandler(),
+			};   
 		}
 	}
 }
