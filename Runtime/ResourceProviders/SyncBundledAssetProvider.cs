@@ -47,7 +47,7 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
 					req.completed += (op) =>
 					{
-						provideHandle.Complete(req.allAssets, result != null, null);
+						provideHandle.Complete(req.allAssets, req.allAssets != null, null);
 					};
 				}
 				else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
@@ -55,16 +55,47 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
 					req.completed += (op) =>
 					{
-						provideHandle.Complete(req.allAssets.ToList(), result != null, null);
+						provideHandle.Complete(req.allAssets.ToList(), req.allAssets != null, null);
 					};
 				}
 				else
 				{
-					req = bundle.LoadAssetAsync(provideHandle.Location.InternalId, t);
-					req.completed += (op) =>
+					string subObjectName = null;
+					if (ExtractKeyAndSubKey(provideHandle.Location.InternalId, out string mainPath, out string subKey))
 					{
-						provideHandle.Complete(req.asset, result != null, null);
-					};
+						subObjectName = subKey;
+						req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
+					}
+					else
+					{
+						req = bundle.LoadAssetAsync(provideHandle.Location.InternalId, t);
+					}
+					
+					if (string.IsNullOrEmpty(subObjectName))
+					{
+						req.completed += (op) =>
+						{
+							provideHandle.Complete(req.asset, req.asset != null, null);
+						};
+					}
+					else
+					{
+						req.completed += (op) =>
+						{
+							foreach (var o in req.allAssets)
+							{
+								if (o.name == subObjectName)
+								{
+									if (provideHandle.Type.IsAssignableFrom(o.GetType()))
+									{
+										provideHandle.Complete(o, o != null, null);
+										break;
+									}
+								}
+							}
+						};
+						
+					}
 				}
 			}
 
@@ -76,6 +107,28 @@ namespace Khepri.AssetDelivery.ResourceProviders
                     return true;
                 return req.asset != null;
             }
+			
+			static bool ExtractKeyAndSubKey(object keyObj, out string mainKey, out string subKey)
+			{
+				var key = keyObj as string;
+				if (key != null)
+				{
+					var i = key.IndexOf('[');
+					if (i > 0)
+					{
+						var j = key.LastIndexOf(']');
+						if (j > i)
+						{
+							mainKey = key.Substring(0, i);
+							subKey = key.Substring(i + 1, j - (i + 1));
+							return true;
+						}
+					}
+				}
+				mainKey = null;
+				subKey = null;
+				return false;
+			}
 		}
 	
 		public override void Provide(ProvideHandle provideHandle)
