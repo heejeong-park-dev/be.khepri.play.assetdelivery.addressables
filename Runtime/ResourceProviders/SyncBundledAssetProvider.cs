@@ -44,21 +44,21 @@ namespace Khepri.AssetDelivery.ResourceProviders
 				object result = null;
 				if (t.IsArray)
 				{	
-					Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(array) Start");
+					UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(array) Start");
 					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
 					req.completed += (op) =>
 					{
-						Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync End");
+						UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync End");
 						provideHandle.Complete(req.allAssets, req.allAssets != null, null);
 					};
 				}
 				else if (t.IsGenericType && typeof(IList<>) == t.GetGenericTypeDefinition())
 				{
-					Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(IList) Start");
+					UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(IList) Start");
 					req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
 					req.completed += (op) =>
 					{
-						Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(IList) End");
+						UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(IList) End");
 						provideHandle.Complete(req.allAssets.ToList(), req.allAssets != null, null);
 					};
 				}
@@ -68,12 +68,12 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					if (ExtractKeyAndSubKey(provideHandle.Location.InternalId, out string mainPath, out string subKey))
 					{
 						subObjectName = subKey;
-						Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(SubKey) Start");
+						UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(SubKey) Start");
 						req = bundle.LoadAssetWithSubAssetsAsync(provideHandle.Location.InternalId, t.GetElementType());
 					}
 					else
 					{
-						Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetAsync Start");
+						UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetAsync Start");
 						req = bundle.LoadAssetAsync(provideHandle.Location.InternalId, t);
 					}
 					
@@ -81,7 +81,7 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					{
 						req.completed += (op) =>
 						{
-							Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetAsync End");
+							UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetAsync End");
 							provideHandle.Complete(req.asset, req.asset != null, null);
 						};
 					}
@@ -89,7 +89,7 @@ namespace Khepri.AssetDelivery.ResourceProviders
 					{
 						req.completed += (op) =>
 						{
-							Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(SubKey) End");
+							UnityEngine.Debug.Log($"[{nameof(SyncBundledAssetProvider)}] LoadAssetWithSubAssetsAsync(SubKey) End");
 							foreach (var o in req.allAssets)
 							{
 								if (o.name == subObjectName)
